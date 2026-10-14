@@ -5,3 +5,4 @@ venv/
 .venv/
 setup_deploy_user.sh
 set_token.sh
+CLAUDE.md
