@@ -1,0 +1,38 @@
+name: Deploy to Hetzner
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency: deploy
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Copy files to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          source: "bot.py,requirements.txt,Dockerfile,docker-compose.yml"
+          target: /opt/telegram-bot
+
+      - name: Rebuild and restart bot
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd /opt/telegram-bot
+            test -f .env || { echo "ERROR: /opt/telegram-bot/.env (BOT_TOKEN) not found"; exit 1; }
+            docker compose up -d --build --remove-orphans
+            docker image prune -f
+            sleep 5
+            docker compose ps
+            docker compose logs --tail 20 bot
