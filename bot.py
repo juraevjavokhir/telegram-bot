@@ -64,6 +64,8 @@ logging.basicConfig(
     level=logging.INFO,
 )
 logger = logging.getLogger(__name__)
+# httpx пишет в INFO каждый URL запроса, а в нём — токен бота
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
 
 # --------------------------------------------------------------------------
